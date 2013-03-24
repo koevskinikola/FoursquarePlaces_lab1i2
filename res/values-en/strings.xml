@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Foursquare Places</string>
+    <string name="action_settings">Settings</string>
+    <string name="places">Places nearby</string>
+	<string name="radius">at a 250 meter radius</string>
+	
+</resources>

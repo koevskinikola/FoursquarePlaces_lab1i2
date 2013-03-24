@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Foursquare места</string>
+    <string name="action_settings">Подесувања</string>
+    <string name="places">Места во близина</string>
+    <string name="radius">на радиус од 250 метри</string>
+
+</resources>

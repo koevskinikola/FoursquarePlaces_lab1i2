@@ -23,14 +23,7 @@ public class ListViewAdapter extends ArrayAdapter<String> {
 	  public View getView(int position, View convertView, ViewGroup parent) {
 	    TextView txtView = (TextView) super.getView(position, convertView, parent);
 	    txtView.setText(places.get(position));
-	    
-	    // Change the icon for Windows and iPhone
-	    /*String s = values[position];
-	    if (s.startsWith("iPhone")) {
-	      imageView.setImageResource(R.drawable.no);
-	    } else {
-	      imageView.setImageResource(R.drawable.ok);
-	    }*/
+
 
 	    return txtView;
 	  }

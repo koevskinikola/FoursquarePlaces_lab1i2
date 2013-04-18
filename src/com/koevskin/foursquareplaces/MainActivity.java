@@ -1,26 +1,29 @@
 package com.koevskin.foursquareplaces;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.widget.ListView;
 
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 public class MainActivity extends Activity {
 
 	ListView lvPlaces;
-	
 	String[] thePlaces;
+	SetThePlaces stp = new SetThePlaces(this);
+	public PlacesDataSource datasource;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,71 +31,64 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
         lvPlaces = (ListView) findViewById(R.id.lvPlaces);
+        datasource = new PlacesDataSource(this);
         
-        GetThePlaces mesta = new GetThePlaces();
-        mesta.execute();
+        DateFormat data = new SimpleDateFormat("yyyy/MM/dd");
+        String currDate = data.format(new Date());
+        
+		SharedPreferences sprefs = getSharedPreferences("com.koevskin.foursquareplaces", MODE_PRIVATE);
+		String pastDate = sprefs.getString("datum", "n/a");
+		
+		System.out.println("Pominatiot datum e: " + pastDate);
+		System.out.println("Segasniot datum e: " + currDate);
+		
+		if (!pastDate.equals(currDate) )
+		{
+			System.out.println("BAZATA E OD DENES");
+			System.out.println("PRIKAZUVAM MESTA OD BAZA");
+			new SetThePlaces(this).execute();		
+		}
+		else
+		{
+			System.out.println("BAZATA NE E OD DENES");
+			System.out.println("ZEMAM MESTA SO SERVIS");
+			Intent service = new Intent(MainActivity.this, PlacesService.class);
+			startService(service);
+		}
         
     }
+    
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    	  @Override
+    	  public void onReceive(Context context, Intent intent) {
+    		  stp.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (Void)null);
+    	  }
+    	};
+    
+    @Override
+    protected void onResume() {
+      datasource.open();
+      super.onResume();
+      
+      LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+    	      new IntentFilter("gotPlacesEvent"));
+    }
 
-    private class GetThePlaces extends AsyncTask<Void, Void, Void> {
+    @Override
+    protected void onPause() {
+      datasource.close();
+      LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+      super.onPause();
+    }
 
-    	ArrayList<String> resultPlaces = new ArrayList<String>();
-    	
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-		}
-
-		@Override
-		protected Void doInBackground(Void... params) {
-
-			LocationManager mgr = (LocationManager) getSystemService(LOCATION_SERVICE);
-			Criteria criteria = new Criteria();
-
-	        String best = mgr.getBestProvider(criteria, true);
-			Location myLocation = mgr.getLastKnownLocation(best);
-			
-			String url = "https://api.foursquare.com/v2/venues/search?ll="+myLocation.getLatitude()+","+myLocation.getLongitude()+"&radius=250&oauth_token=EIRAL4CH3IFGKYZQVCO5HDIW5JNB3YJSLNDHX4II2HCAWTMT&v=20130324";
-	    	
-	    	ParseJSON jsonParse = new ParseJSON();
-	    	
-	    	JSONObject json = jsonParse.getJSONFromUrl(url);
-	    	
-	    	try{
-	    		JSONObject response = json.getJSONObject("response");
-	    		JSONArray venues = response.getJSONArray("venues");
-	    		
-	    		for (int i=0; i<venues.length(); i++){
-	    			JSONObject place = venues.getJSONObject(i);
-	    			resultPlaces.add(place.getString("name"));
-	    		}
-	    	}catch (JSONException e) {
-	    	    e.printStackTrace();
-	    	}
-			
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			super.onPostExecute(result);
-			
-			setPlaces(resultPlaces);
-		}
-	}
-
-    public void setPlaces(ArrayList<String> places){
-    	
-    	ListViewAdapter customAdapter =      
-		         new ListViewAdapter(this, places);
-		
-       this.lvPlaces.setAdapter(customAdapter);
-    	
+    public void setPlaces(ArrayList<String> places)
+    {
+       	ListViewAdapter customAdapter = new ListViewAdapter(this, places);
+	    this.lvPlaces.setAdapter(customAdapter);	
     }
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }

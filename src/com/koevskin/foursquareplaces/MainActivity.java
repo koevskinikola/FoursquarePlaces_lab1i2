@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
 		System.out.println("Pominatiot datum e: " + pastDate);
 		System.out.println("Segasniot datum e: " + currDate);
 		
-		if (!pastDate.equals(currDate) )
+		if (pastDate.equals(currDate) )
 		{
 			System.out.println("BAZATA E OD DENES");
 			System.out.println("PRIKAZUVAM MESTA OD BAZA");
